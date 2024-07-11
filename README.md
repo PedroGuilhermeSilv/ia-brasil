@@ -12,109 +12,128 @@ Um CSP consiste em três componentes principais:
 3. **C**: Conjunto de restrições que especificam combinações de valores possíveis entre as variáveis
 
 ### Explicação do Código
+## README
 
-Vamos analisar o código fornecido com base na definição de CSP:
+Este repositório contém um código Python que utiliza o algoritmo de backtracking para resolver um problema de coloração de mapas geoespaciais. O objetivo é colorir as regiões Norte e Centro-Oeste do Brasil, seguindo determinadas restrições.
 
-```python
-import geopandas as gpd
-import matplotlib.pyplot as plt
+### Requisitos
 
-# Definindo as variáveis e seus domínios
-variables = ['N', 'CO']
-domains = {
-    'N': ['vermelho', 'azul', 'amarelo', 'marrom'],
-    'CO': ['vermelho', 'azul', 'amarelo', 'marrom']
-}
+Para executar o código, você precisa ter instaladas as seguintes bibliotecas Python:
+- `geopandas`
+- `matplotlib`
 
-# Definindo as restrições
-def constraints(assignment):
-    if 'N' in assignment and 'CO' in assignment:
-        if assignment['N'] == assignment['CO']:
-            return False
-    return True
+Você pode instalar essas bibliotecas usando pip:
 
-# Algoritmo de backtracking
-def backtracking(assignment):
-    if len(assignment) == len(variables):
-        return assignment
-    
-    unassigned = [v for v in variables if v not in assignment]
-    first = unassigned[0]
-    
-    for value in domains[first]:
-        local_assignment = assignment.copy()
-        local_assignment[first] = value
-        
-        if constraints(local_assignment):
-            result = backtracking(local_assignment)
-            if result is not None:
-                return result
-    
-    return None
-
-# Executando o algoritmo de backtracking
-solution = {'N': 'vermelho', 'CO': 'amarelo'}
-print(solution)
-
-# Função para mapear as cores
-def get_color(region, solution):
-    colors = {
-        'vermelho': 'red',
-        'azul': 'blue',
-        'amarelo': 'yellow',
-        'marrom': 'brown'
-    }
-    return colors[solution[region]]
-
-# Carregar dados geoespaciais dos estados do Brasil
-brazil_states = gpd.read_file('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
-
-# Definir as regiões e suas subdivisões
-regions = {
-    'N': ['Acre', 'Amapá', 'Amazonas', 'Pará', 'Rondônia', 'Roraima', 'Tocantins'],
-    'CO': ['Distrito Federal', 'Goiás', 'Mato Grosso', 'Mato Grosso do Sul']
-}
-
-# Plotar o mapa do Brasil
-fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-
-brazil_states.boundary.plot(ax=ax, linewidth=1)
-
-# Colorir as regiões conforme a solução encontrada
-for region, states in regions.items():
-    for state in states:
-        brazil_states[brazil_states.name == state].plot(ax=ax, color=get_color(region, solution))
-
-plt.title('Coloração das Regiões Norte e Centro-Oeste do Brasil')
-plt.show()
+```bash
+pip install geopandas matplotlib
 ```
 
-### Componentes do CSP no Código
+### Descrição do Código
 
-1. **Variáveis (X)**:
-   - `variables = ['N', 'CO']`: As variáveis são as regiões Norte (N) e Centro-Oeste (CO).
+O código está dividido em várias partes:
 
-2. **Domínios (D)**:
-   - `domains = {'N': ['vermelho', 'azul', 'amarelo', 'marrom'], 'CO': ['vermelho', 'azul', 'amarelo', 'marrom']}`: Cada variável tem um domínio de cores possíveis (vermelho, azul, amarelo, marrom).
+1. **Importação das Bibliotecas Necessárias**
+    ```python
+    import geopandas as gpd
+    import matplotlib.pyplot as plt
+    ```
 
-3. **Restrições (C)**:
-   - `def constraints(assignment)`: A função de restrição garante que as variáveis Norte e Centro-Oeste não possam ter a mesma cor.
+2. **Definição das Variáveis e Seus Domínios**
+    ```python
+    variables = ['N', 'CO']
+    domains = {
+        'N': ['vermelho', 'amarelo', 'marrom'],
+        'CO': ['azul', 'amarelo', 'marrom']
+    }
+    ```
 
-### Algoritmo de Backtracking
+3. **Definição das Restrições**
+    ```python
+    def constraints(assignment):
+        if 'N' in assignment and assignment['N'] != 'vermelho':
+            return False
+        if 'CO' in assignment and assignment['CO'] != 'azul':
+            return False
+        return True
+    ```
 
-O algoritmo de backtracking é utilizado para explorar todas as combinações possíveis de valores das variáveis, respeitando as restrições. Ele tenta atribuir valores às variáveis uma por uma e verifica se a atribuição satisfaz as restrições. Se uma atribuição não é válida, o algoritmo faz o backtracking (retrocede) e tenta uma nova atribuição.
+4. **Algoritmo de Backtracking**
+    ```python
+    def backtracking(assignment):
+        if len(assignment) == len(variables):
+            return assignment
+        
+        unassigned = [v for v in variables if v not in assignment]
+        first = unassigned[0]
+        
+        for value in domains[first]:
+            local_assignment = assignment.copy()
+            local_assignment[first] = value
+            
+            if constraints(local_assignment):
+                result = backtracking(local_assignment)
+                if result is not None:
+                    return result
+        
+        return None
+    
+    solution = backtracking({})
+    print(solution)
+    ```
 
-### Visualização do Resultado
+5. **Função para Mapear as Cores**
+    ```python
+    def get_color(region, solution):
+        colors = {
+            'vermelho': 'red',
+            'azul': 'blue',
+            'amarelo': 'yellow',
+            'marrom': 'brown'
+        }
+        return colors[solution[region]]
+    ```
 
-A solução encontrada (`solution = {'N': 'vermelho', 'CO': 'amarelo'}`) é então usada para colorir um mapa geoespacial do Brasil, destacando as regiões Norte e Centro-Oeste nas cores especificadas.
+6. **Carregar Dados Geoespaciais e Plotar o Mapa**
+    ```python
+    brazil_states = gpd.read_file('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
 
-1. **Carregar Dados Geoespaciais**:
-   - Os dados dos estados brasileiros são carregados usando `geopandas`.
+    regions = {
+        'N': ['Acre', 'Amapá', 'Amazonas', 'Pará', 'Rondônia', 'Roraima', 'Tocantins'],
+        'CO': ['Distrito Federal', 'Goiás', 'Mato Grosso', 'Mato Grosso do Sul']
+    }
 
-2. **Definir Regiões**:
-   - As subdivisões dos estados dentro das regiões Norte e Centro-Oeste são especificadas.
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 
-3. **Plotagem do Mapa**:
-   - Utilizando `matplotlib`, o mapa dos estados é plotado e colorido conforme a solução encontrada, visualizando a coloração das regiões Norte e Centro-Oeste.
+    brazil_states.boundary.plot(ax=ax, linewidth=1)
 
-Este exemplo ilustra como os Problemas de Satisfação de Restrições podem ser aplicados para resolver um problema de coloração de mapa, garantindo que certas regiões tenham cores diferentes e visualizando a solução de forma clara e intuitiva.
+    for region, states in regions.items():
+        for state in states:
+            brazil_states[brazil_states.name == state].plot(ax=ax, color=get_color(region, solution))
+
+    plt.title('Coloração das Regiões Norte e Centro-Oeste do Brasil')
+    plt.show()
+    ```
+
+### Como Executar
+
+1. Certifique-se de que todas as bibliotecas necessárias estão instaladas.
+2. Copie o código em um arquivo Python (por exemplo, `map_coloring.py`).
+3. Execute o arquivo Python:
+
+    ```bash
+    python map_coloring.py
+    ```
+
+Isso deve gerar um mapa do Brasil com as regiões Norte e Centro-Oeste coloridas de acordo com a solução encontrada pelo algoritmo de backtracking.
+
+### Explicação do Algoritmo de Backtracking
+
+O algoritmo de backtracking é utilizado para encontrar uma atribuição de cores para as regiões, respeitando as restrições definidas. As restrições neste caso são:
+- A região 'N' deve ser colorida de 'vermelho'.
+- A região 'CO' deve ser colorida de 'azul'.
+
+O algoritmo tenta atribuir cores às regiões de forma recursiva, verificando se as restrições são satisfeitas a cada atribuição. Se uma atribuição satisfaz todas as restrições, ela é retornada como solução.
+
+### Conclusão
+
+Este código demonstra como utilizar algoritmos de busca como o backtracking para resolver problemas de coloração de mapas geoespaciais, e como visualizar os resultados usando a biblioteca `geopandas` e `matplotlib`.
